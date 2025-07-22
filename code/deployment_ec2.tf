@@ -7,6 +7,9 @@ resource "aws_instance" "web_host" {
   "${aws_security_group.web-node.id}"]
   subnet_id = "${aws_subnet.web_subnet.id}"
   iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
+ metadata_options {
+    http_tokens = "required"
+  }
 }
 
 resource "aws_ebs_volume" "web_host_storage" {
