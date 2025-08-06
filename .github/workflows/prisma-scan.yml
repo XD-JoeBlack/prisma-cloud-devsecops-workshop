@@ -16,17 +16,16 @@ jobs:
 
       - name: Download twistcli
         run: |
-          curl -k -L "${{ secrets.PRISMA_CONSOLE_URL }}/api/v1/util/twistcli" -o twistcli
+          curl -k -L "${{secrets.PRISMA_CONSOLE_URL}}/api/v1/util/twistcli" -o twistcli
           chmod +x twistcli
 
       - name: Run twistcli scan
         run: |
           ./twistcli coderepo scan \
-            --address ${{ secrets.PRISMA_CONSOLE_URL }} \
-            --user ${{ secrets.PRISMA_ACCESS_KEY }} \
-            --password ${{ secrets.PRISMA_SECRET_KEY }} \
-            --repo-id "github/${{ github.repository }}" \
-            --branch "${{ github.ref_name }}" \
-            --commit "${{ github.sha }}" \
-            .
+            --address "${{secrets.PRISMA_CONSOLE_URL}}" \
+            --user "${{secrets.PRISMA_ACCESS_KEY}}" \
+            --password "${{secrets.PRISMA_SECRET_KEY}}" \
+            --repo-id "github/${{github.repository}}" \
+            --branch "${{github.ref_name}}" \
+            --commit "${{github.sha}}"
 
