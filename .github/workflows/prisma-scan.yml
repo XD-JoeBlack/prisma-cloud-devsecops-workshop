@@ -16,8 +16,10 @@ jobs:
 
       - name: Download twistcli
         run: |
-          curl -k -L "${{secrets.PRISMA_CONSOLE_URL}}/api/v1/util/twistcli" -o twistcli
+          curl -k -L -u "${{ secrets.PRISMA_ACCESS_KEY }}:${{ secrets.PRISMA_SECRET_KEY }}" \
+          "${{ secrets.PRISMA_CONSOLE_URL }}/api/v1/util/twistcli" -o twistcli
           chmod +x twistcli
+
 
       - name: Run twistcli scan
         run: |
