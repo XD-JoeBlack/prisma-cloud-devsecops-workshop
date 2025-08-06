@@ -16,8 +16,15 @@ jobs:
 
       - name: Download twistcli
         run: |
-          curl -k -L -u "${{ secrets.PRISMA_ACCESS_KEY }}:${{ secrets.PRISMA_SECRET_KEY }}" \
-          "${{ secrets.PRISMA_CONSOLE_URL }}/api/v1/util/twistcli" -o twistcli
+          TOKEN=$(curl -s -k -u "${{ secrets.PRISMA_ACCESS_KEY }}:${{ secrets.PRISMA_SECRET_KEY }}" \
+            -H "content-type: application/json" \
+            -X POST "https://app.sg.prismacloud.io/login" | jq -r .token)
+
+          curl -k -L \
+            -H "authorization: Bearer $TOKEN" \
+            "https://app.sg.prismacloud.io/api/v1/util/twistcli" \
+            -o twistcli
+
           chmod +x twistcli
 
 
