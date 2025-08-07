@@ -1,10 +1,6 @@
 name: Prisma Cloud Code Scan
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   prisma-scan:
@@ -15,27 +11,33 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download twistcli
+        env:
+          ACCESS_KEY: ${{ secrets.PRISMA_ACCESS_KEY }}
+          SECRET_KEY: ${{ secrets.PRISMA_SECRET_KEY }}
+          PRISMA_URL: ${{ secrets.PRISMA_CONSOLE_URL }}
         run: |
-          TOKEN=$(curl -s -k -u "${{ secrets.PRISMA_ACCESS_KEY }}:${{ secrets.PRISMA_SECRET_KEY }}" \
-            -H "content-type: application/json" \
-            -X POST "https://app.sg.prismacloud.io/login" | jq -r .token)
-
-          curl -k -L \
-            -H "authorization: Bearer $TOKEN" \
-            "https://app.sg.prismacloud.io/api/v1/util/twistcli" \
-            -o twistcli
-
+          curl -L -u "$ACCESS_KEY:$SECRET_KEY" "$PRISMA_URL/api/v1/util/twistcli" -o twistcli
           chmod +x twistcli
 
-
-
-      - name: Run twistcli scan
+      - name: Run Prisma Cloud Code Scan
+        env:
+          ACCESS_KEY: ${{ secrets.PRISMA_ACCESS_KEY }}
+          SECRET_KEY: ${{ secrets.PRISMA_SECRET_KEY }}
+          PRISMA_URL: ${{ secrets.PRISMA_CONSOLE_URL }}
         run: |
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}"
           ./twistcli coderepo scan \
-            --address "${{secrets.PRISMA_CONSOLE_URL}}" \
-            --user "${{secrets.PRISMA_ACCESS_KEY}}" \
-            --password "${{secrets.PRISMA_SECRET_KEY}}" \
-            --repo-id "github/${{github.repository}}" \
-            --branch "${{github.ref_name}}" \
-            --commit "${{github.sha}}"
+            --address "$PRISMA_URL" \
+            --repo-id "$GITHUB_REPOSITORY" \
+            --branch "$BRANCH" \
+            --details \
+            --output-file results.json \
+            --ci \
+            --publish \
+            --bc-api-key "${ACCESS_KEY}::${SECRET_KEY}"
+
+      - name: Show scan summary
+        if: always()
+        run: |
+          [ -f results.json ] && jq '.summary // empty' results.json || echo "No results file found"
 
