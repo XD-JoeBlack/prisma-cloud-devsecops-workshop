@@ -1,43 +1,33 @@
 name: Prisma Cloud Code Scan
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   prisma-scan:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Download twistcli
-        env:
-          ACCESS_KEY: ${{ secrets.PRISMA_ACCESS_KEY }}
-          SECRET_KEY: ${{ secrets.PRISMA_SECRET_KEY }}
-          PRISMA_URL: ${{ secrets.PRISMA_CONSOLE_URL }}
         run: |
-          curl -L -u "$ACCESS_KEY:$SECRET_KEY" "$PRISMA_URL/api/v1/util/twistcli" -o twistcli
+          TOKEN=$(curl -s -k -u "${{ secrets.PRISMA_ACCESS_KEY }}:${{ secrets.PRISMA_SECRET_KEY }}" \
+            "${{ secrets.PRISMA_CONSOLE_URL }}/login" | jq -r .token)
+
+          curl -k -H "authorization: Bearer $TOKEN" \
+            "${{ secrets.PRISMA_CONSOLE_URL }}/api/v1/util/twistcli" -o twistcli
           chmod +x twistcli
 
       - name: Run Prisma Cloud Code Scan
-        env:
-          ACCESS_KEY: ${{ secrets.PRISMA_ACCESS_KEY }}
-          SECRET_KEY: ${{ secrets.PRISMA_SECRET_KEY }}
-          PRISMA_URL: ${{ secrets.PRISMA_CONSOLE_URL }}
         run: |
           BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}"
           ./twistcli coderepo scan \
-            --address "$PRISMA_URL" \
-            --repo-id "$GITHUB_REPOSITORY" \
+            --address ${{ secrets.PRISMA_CONSOLE_URL }} \
+            --token $TOKEN \
+            --repo-id "github/${{ github.repository }}" \
             --branch "$BRANCH" \
-            --details \
-            --output-file results.json \
-            --ci \
-            --publish \
-            --bc-api-key "${ACCESS_KEY}::${SECRET_KEY}"
-
-      - name: Show scan summary
-        if: always()
-        run: |
-          [ -f results.json ] && jq '.summary // empty' results.json || echo "No results file found"
-
+            --commit "${{ github.sha }}"
