@@ -1,11 +1,29 @@
-steps:
-      - name: Checkout repo
-        uses: actions/checkout@v2
+name: Prisma Cloud – CI/CD Runs
 
-      - name: Run Prisma Cloud 
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  prisma:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run Prisma Cloud
         id: prisma-cloud
-        uses: bridgecrewio/checkov-action@master
+        # pin the action version instead of "master" for supply-chain safety
+        uses: bridgecrewio/checkov-action@v12.1968.0
         env:
           PRISMA_API_URL: https://api.sg.prismacloud.io
         with:
           api-key: ${{ secrets.BC_API_KEY }}
+          # optional:
+          # soft_fail: true
+          # quiet: true
