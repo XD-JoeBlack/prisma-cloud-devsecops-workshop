@@ -1,5 +1,4 @@
 name: Prisma Cloud – CI/CD Runs
-
 on:
   push:
     branches: [ main ]
@@ -9,21 +8,16 @@ on:
 jobs:
   prisma:
     runs-on: ubuntu-latest
+    environment: Prisma-Cloud        # <-- required if BC_API_KEY is an Environment secret
     permissions:
       contents: read
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Run Prisma Cloud
         id: prisma-cloud
-        # pin the action version instead of "master" for supply-chain safety
-        uses: bridgecrewio/checkov-action@v12.1968.0
+        uses: bridgecrewio/checkov-action@v12.1968.0   # pin instead of "master"
         env:
           PRISMA_API_URL: https://api.sg.prismacloud.io
         with:
           api-key: ${{ secrets.BC_API_KEY }}
-          # optional:
-          # soft_fail: true
-          # quiet: true
+          # soft_fail: true   # optional
